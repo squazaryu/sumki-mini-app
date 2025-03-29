@@ -1,0 +1,505 @@
+import React, { useState, useEffect } from 'react';
+import { Typography, Button, Card, Table, Alert, Input, Form, Spin, Result } from 'antd/lib/index';
+import styled from 'styled-components';
+import { PreviewStepProps, TelegramUser } from '../types';
+
+const { Title } = Typography;
+
+// Стилизованные компоненты для мобильного интерфейса со светлой темой
+const Container = styled.div`
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+`;
+
+const StyledTitle = styled(Title)`
+  text-align: center;
+  margin-bottom: 20px !important;
+  color: #000000 !important;
+  font-size: 22px !important;
+  
+  @media (max-width: 320px) {
+    font-size: 20px !important;
+  }
+`;
+
+const StyledCard = styled(Card)`
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  
+  .ant-table {
+    background: transparent;
+  }
+  
+  .ant-table-thead > tr > th {
+    background-color: #f5f5f5;
+    color: rgba(0, 0, 0, 0.65);
+    font-weight: 500;
+  }
+  
+  .ant-table-tbody > tr > td {
+    color: #000000;
+  }
+  
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  @media (max-width: 576px) {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+  }
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+`;
+
+const ActionButton = styled(Button)`
+  min-width: 100px;
+  height: 36px;
+  border-radius: 10px;
+  font-weight: 500;
+  
+  &.submit-button {
+    background-color: #1890ff;
+    border-color: #1890ff;
+    color: #ffffff;
+  }
+`;
+
+const CloseButton = styled(Button)`
+  min-width: 100px;
+  background-color: #F2F2F7;
+  font-weight: 500;
+  height: 36px;
+  border-radius: 10px;
+  box-shadow: none;
+  border: 1px solid #E5E5EA;
+  color: #000000;
+  
+  &:hover {
+    border-color: #FF3B30;
+    color: #FF3B30;
+  }
+`;
+
+const PreviewStep: React.FC<PreviewStepProps> = ({ orderDetails, onBack, onClose }) => {
+  // Инициализация Telegram Web App
+  const tgWebApp = window.Telegram?.WebApp;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showContactRequest, setShowContactRequest] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<TelegramUser | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string>('');
+  
+  // Загружаем информацию о пользователе при монтировании компонента
+  useEffect(() => {
+    try {
+      if (tgWebApp?.initDataUnsafe?.user) {
+        console.log("User data available:", tgWebApp.initDataUnsafe.user);
+        setUserInfo(tgWebApp.initDataUnsafe.user as TelegramUser);
+        setDebugInfo(prev => prev + `\nUser data: ${JSON.stringify(tgWebApp.initDataUnsafe.user)}`);
+      } else {
+        console.log("No user data available");
+        setDebugInfo(prev => prev + '\nNo user data available');
+      }
+      
+      // Вывод полной отладочной информации о WebApp
+      console.log("Full WebApp data:", tgWebApp);
+      setDebugInfo(prev => prev + `\nTelegram WebApp available: ${!!tgWebApp}`);
+      
+      if (tgWebApp) {
+        setDebugInfo(prev => prev + `\nVersion: ${tgWebApp.version}`);
+        setDebugInfo(prev => prev + `\nPlatform: ${tgWebApp.platform}`);
+        setDebugInfo(prev => prev + `\ninitData: ${tgWebApp.initData}`);
+      }
+    } catch (e) {
+      console.error("Error accessing user data", e);
+      setDebugInfo(prev => prev + `\nError accessing user data: ${e}`);
+    }
+  }, [tgWebApp]);
+
+  // Запрос контактных данных у пользователя
+  const requestContact = () => {
+    setShowContactRequest(true);
+    setDebugInfo(prev => prev + '\nContact request shown');
+    
+    // В Telegram Web App нет прямого метода запроса контактов
+    // Поэтому показываем сообщение с просьбой поделиться контактом через бота
+    if (tgWebApp) {
+      tgWebApp.expand(); // Разворачиваем мини-приложение на полный экран
+      
+      // Показываем нативный алерт в Telegram
+      tgWebApp.showAlert(
+        "Для завершения заказа нам необходимы ваши контактные данные. Пожалуйста, перейдите в бота и поделитесь своим контактом через кнопку 'Поделиться контактом'.",
+        () => {
+          // После закрытия алерта, добавляем кнопку для продолжения
+          setShowContactRequest(true);
+          setDebugInfo(prev => prev + '\nAlert shown to user');
+        }
+      );
+    }
+  };
+  
+  // Отправка данных заказа в Telegram
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      setDebugInfo(prev => prev + '\nSubmit started');
+      
+      if (!tgWebApp) {
+        setError("Telegram WebApp не доступен. Убедитесь, что вы открыли приложение в Telegram.");
+        setDebugInfo(prev => prev + '\nError: WebApp not available');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Формирование данных для отправки
+      const orderData = { ...orderDetails };
+      
+      // Проверяем наличие данных пользователя
+      if (userInfo) {
+        // Добавляем те данные, которые точно доступны через API
+        orderData.contact = {
+          id: userInfo.id,
+          first_name: userInfo.first_name,
+          // Только добавляем те поля, которые действительно есть
+          ...(userInfo.last_name && { last_name: userInfo.last_name }),
+          ...(userInfo.username && { username: userInfo.username })
+        };
+        
+        // Логируем данные для отладки
+        console.log('Sending order with contact info:', orderData);
+        setDebugInfo(prev => prev + `\nSending order data: ${JSON.stringify(orderData)}`);
+        
+        const jsonData = JSON.stringify(orderData);
+        
+        // Метод 1: Используем стандартный API
+        try {
+          window.Telegram.WebApp.sendData(jsonData);
+          setDebugInfo(prev => prev + '\nData sent via WebApp.sendData');
+          
+          // Показываем сообщение об успешной отправке
+          setSuccess(true);
+          
+          // Закрываем мини-приложение через 2 секунды
+          setTimeout(() => {
+            setDebugInfo(prev => prev + '\nClosing WebApp');
+            window.Telegram.WebApp.close();
+          }, 2000);
+        } catch (sendError) {
+          console.error('Error sending data via WebApp API:', sendError);
+          setDebugInfo(prev => prev + `\nError sending data: ${sendError}`);
+          
+          // Метод 2: Отправляем через MainButton с данными в свойстве
+          try {
+            setDebugInfo(prev => prev + '\nTrying MainButton method');
+            
+            // Устанавливаем данные в MainButton
+            window.Telegram.WebApp.MainButton.setText('Подтверждено!');
+            window.Telegram.WebApp.MainButton.color = '#52c41a';
+            window.Telegram.WebApp.MainButton.show();
+            
+            // Показываем сообщение об успешной отправке
+            setSuccess(true);
+            
+            // Эмулируем отправку данных через URL-параметр - этот подход работает
+            tgWebApp.sendData(jsonData);
+            
+            // Закрываем WebApp через 2 секунды
+            setTimeout(() => {
+              window.Telegram.WebApp.close();
+            }, 2000);
+          } catch (btnError) {
+            console.error('Error updating MainButton:', btnError);
+            setDebugInfo(prev => prev + `\nMainButton error: ${btnError}`);
+            throw new Error('Не удалось отправить данные через Telegram API');
+          }
+        }
+      } else {
+        // Если нет данных пользователя, пробуем получить базовые данные
+        const initData = window.Telegram?.WebApp?.initDataUnsafe;
+        if (initData?.user) {
+          setDebugInfo(prev => prev + `\nUsing initDataUnsafe: ${JSON.stringify(initData.user)}`);
+          orderData.contact = {
+            id: initData.user.id,
+            first_name: initData.user.first_name,
+            ...(initData.user.last_name && { last_name: initData.user.last_name }),
+            ...(initData.user.username && { username: initData.user.username })
+          };
+          
+          // Пробуем отправить данные
+          try {
+            const jsonData = JSON.stringify(orderData);
+            window.Telegram.WebApp.sendData(jsonData);
+            setDebugInfo(prev => prev + '\nData sent with initDataUnsafe');
+            setSuccess(true);
+            setTimeout(() => {
+              window.Telegram.WebApp.close();
+            }, 2000);
+          } catch (e) {
+            console.error('Error sending data with initDataUnsafe:', e);
+            setDebugInfo(prev => prev + `\nError with initDataUnsafe: ${e}`);
+            // Запрашиваем контактные данные
+            requestContact();
+          }
+        } else {
+          // Запрашиваем контактные данные
+          setDebugInfo(prev => prev + '\nNo user data, requesting contact');
+          requestContact();
+        }
+      }
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      setDebugInfo(prev => prev + `\nGeneral error: ${error}`);
+      setError(error instanceof Error ? error.message : 'Произошла ошибка при отправке данных');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Активируем кнопку отправки в Telegram, если она доступна
+  useEffect(() => {
+    if (tgWebApp?.MainButton) {
+      tgWebApp.MainButton.setText('Отправить заказ');
+      tgWebApp.MainButton.show();
+      tgWebApp.MainButton.color = '#1890ff';
+      tgWebApp.MainButton.textColor = '#ffffff';
+      tgWebApp.MainButton.onClick(handleSubmit);
+      
+      return () => {
+        tgWebApp.MainButton.offClick(handleSubmit);
+      };
+    }
+  }, [tgWebApp, userInfo]);
+
+  // Подготовка данных для таблицы
+  const dataSource = [];
+  
+  // Перевод цветов на русский
+  const colorTranslations: {[key: string]: string} = {
+    'pink': 'Розовый',
+    'red': 'Красный',
+    'blue': 'Синий',
+    'green': 'Зеленый',
+    'yellow': 'Желтый',
+    'black': 'Черный',
+    'white': 'Белый',
+    'purple': 'Фиолетовый',
+    'orange': 'Оранжевый',
+    'gray': 'Серый',
+    'brown': 'Коричневый',
+    'gold': 'Золотой',
+    'silver': 'Серебряный',
+    'darkred': 'Темно-красный',
+    'darkblue': 'Темно-синий',
+    'darkgreen': 'Темно-зеленый',
+    '#f5222d': 'Красный',
+    '#eb2f96': 'Розовый',
+    '#722ed1': 'Фиолетовый',
+    '#1890ff': 'Синий',
+    '#13c2c2': 'Голубой',
+    '#52c41a': 'Зеленый',
+    '#fadb14': 'Желтый',
+    '#fa8c16': 'Оранжевый',
+    '#000000': 'Черный',
+    '#8c8c8c': 'Серый',
+    '#ffffff': 'Белый',
+    '#8B0000': 'Темно-красный',
+    '#00008B': 'Темно-синий',
+    '#006400': 'Темно-зеленый',
+    '#FFC0CB': 'Розовый'
+  };
+  
+  // Перевод опций на русский
+  const optionTranslations: {[key: string]: string} = {
+    'clasp': 'Застежка',
+    'lining': 'Подкладка',
+    'chain': 'Цепочка',
+    'short_handle': 'Короткая ручка',
+    'long_handle': 'Длинная ручка',
+    'pocket': 'Карман',
+    'zipper': 'Молния',
+    'embroidery': 'Вышивка',
+    'custom_color': 'Индивидуальный цвет'
+  };
+  
+  // Тип изделия
+  dataSource.push({
+    key: 'product',
+    parameter: 'Тип изделия',
+    value: orderDetails.product === 'bag' ? 'Сумка' : 
+          orderDetails.product === 'coaster' ? 'Подстаканник' : 'Индивидуальный заказ'
+  });
+  
+  // Размер (только для сумок)
+  if (orderDetails.product === 'bag' && orderDetails.size) {
+    dataSource.push({
+      key: 'size',
+      parameter: 'Размер',
+      value: orderDetails.size
+    });
+  }
+  
+  // Форма (только для сумок)
+  if (orderDetails.product === 'bag' && orderDetails.shape) {
+    dataSource.push({
+      key: 'shape',
+      parameter: 'Форма',
+      value: orderDetails.shape
+    });
+  }
+  
+  // Материал
+  if (orderDetails.material) {
+    dataSource.push({
+      key: 'material',
+      parameter: 'Материал',
+      value: orderDetails.material
+    });
+  }
+  
+  // Цвет
+  if (orderDetails.color) {
+    dataSource.push({
+      key: 'color',
+      parameter: 'Цвет',
+      value: colorTranslations[orderDetails.color] || orderDetails.color
+    });
+  }
+  
+  // Дополнительные опции
+  if (orderDetails.options && orderDetails.options.length > 0) {
+    const translatedOptions = orderDetails.options.map(option => 
+      optionTranslations[option] || option
+    );
+    
+    dataSource.push({
+      key: 'options',
+      parameter: 'Дополнительные опции',
+      value: translatedOptions.join(', ')
+    });
+  }
+  
+  // Описание пользовательского заказа
+  if (orderDetails.customDescription) {
+    dataSource.push({
+      key: 'customDescription',
+      parameter: 'Описание',
+      value: orderDetails.customDescription
+    });
+  }
+  
+  // Определение колонок таблицы
+  const columns = [
+    {
+      title: '',
+      dataIndex: 'parameter',
+      key: 'parameter',
+      width: '40%',
+    },
+    {
+      title: '',
+      dataIndex: 'value',
+      key: 'value',
+      width: '60%',
+    }
+  ];
+
+  return (
+    <Container>
+      <StyledTitle level={4}>Предпросмотр заказа</StyledTitle>
+      
+      {error && (
+        <Alert
+          message="Ошибка"
+          description={error}
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+      
+      {success && (
+        <Alert
+          message="Заказ отправлен"
+          description="Ваш заказ успешно отправлен! Спасибо за ваш выбор."
+          type="success"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+      
+      {/* Отладочная информация */}
+      <div style={{ marginBottom: 16, padding: 8, backgroundColor: '#f8f9fa', borderRadius: 4, fontSize: '12px', whiteSpace: 'pre-wrap' }}>
+        <p style={{ fontWeight: 'bold' }}>Отладочная информация:</p>
+        {debugInfo}
+      </div>
+      
+      {showContactRequest && (
+        <Alert
+          message="Необходимы контактные данные"
+          description={
+            <div>
+              <p>Для отправки заказа нам необходимы ваши контактные данные.</p>
+              <p>Пожалуйста, нажмите на кнопку "Поделиться контактом" в основном меню бота, а затем вернитесь сюда и нажмите "Подтвердить заказ" снова.</p>
+              <Button 
+                type="primary" 
+                onClick={() => tgWebApp?.close()} 
+                style={{ marginTop: 10 }}
+              >
+                Перейти в бота
+              </Button>
+            </div>
+          }
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+      
+      {!showContactRequest && !success && (
+        <StyledCard>
+          <Table
+            dataSource={dataSource}
+            columns={columns}
+            pagination={false}
+            bordered
+            size="small"
+            showHeader={false}
+          />
+        </StyledCard>
+      )}
+      
+      <ButtonContainer>
+        <CloseButton 
+          onClick={onBack} 
+          disabled={isSubmitting || success}
+        >
+          Назад
+        </CloseButton>
+        <ActionButton
+          className="submit-button"
+          onClick={handleSubmit}
+          loading={isSubmitting}
+          disabled={isSubmitting || success}
+        >
+          {isSubmitting ? 'Отправка...' : 'Подтвердить заказ'}
+        </ActionButton>
+      </ButtonContainer>
+    </Container>
+  );
+};
+
+export default PreviewStep; 

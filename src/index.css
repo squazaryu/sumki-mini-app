@@ -1,0 +1,256 @@
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  background-color: #F2F2F7;
+  color: #000000;
+  overscroll-behavior: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+/* Плавная прокрутка */
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Стили для скроллбара в стиле Apple */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8E8E93;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #636366;
+}
+
+/* Анимации в стиле Apple */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Стили для фокуса в стиле мобильных устройств */
+:focus {
+  outline: none;
+}
+
+/* Стили для выделения текста */
+::selection {
+  background: rgba(0, 122, 255, 0.2);
+  color: #000000;
+}
+
+/* Стили для изображений */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  touch-action: manipulation;
+}
+
+/* Стили для Telegram Mini App - только светлая тема */
+.telegram-app {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* Стили для карточек */
+.ant-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Стили для кнопок */
+.ant-btn {
+  border-radius: 10px;
+  height: 44px;
+  font-weight: 500;
+  box-shadow: none;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.ant-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* Стили для заголовков */
+.ant-typography {
+  color: #000000;
+}
+
+/* Стили для иконок */
+.anticon {
+  color: #000000;
+}
+
+/* Стили для загрузки изображений */
+.ant-upload-list-picture-card {
+  border-radius: 12px;
+}
+
+/* Стили для выбора цвета */
+.ant-color-picker {
+  width: 100%;
+}
+
+/* Стили для чекбоксов */
+.ant-checkbox-wrapper {
+  width: 100%;
+}
+
+/* Стили для шагов формы */
+.step-container {
+  padding: 16px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Стили для предпросмотра */
+.preview-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+/* Стили для списка опций */
+.options-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.options-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.options-list li:last-child {
+  border-bottom: none;
+}
+
+/* Сетка для отображения продуктов */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.product-card.selected {
+  border: 2px solid #1890ff;
+}
+
+/* Создаем эффект нативного прикосновения для мобильных устройств */
+@media (max-width: 767px) {
+  .ant-card-hoverable:active {
+    transform: scale(0.98);
+  }
+  
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .ant-typography {
+    font-size: 90%;
+  }
+  
+  .ant-btn {
+    font-size: 15px;
+  }
+}
+
+/* Контейнер приложения для сохранения пропорций экрана */
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Стили для кнопок - только светлая тема */
+button.ant-btn-primary {
+  background-color: #1890ff;
+  border-color: #1890ff;
+  color: #ffffff;
+}
+
+.ant-btn-primary:hover {
+  background-color: #1890ff;
+  opacity: 0.9;
+  border-color: #1890ff;
+}
+
+/* Text in dropdowns and form items */
+.ant-select-selection-item,
+.ant-form-item-label > label {
+  color: #000000 !important;
+}
+
+/* Dropdown menus */
+.ant-dropdown-menu-item,
+.ant-select-item {
+  color: #000000 !important;
+}
+
+/* Modal text */
+.ant-modal-content,
+.ant-modal-header,
+.ant-modal-title {
+  color: #000000 !important;
+}
+
+/* Input text */
+.ant-input,
+.ant-input-number-input {
+  color: #000000 !important;
+}
+
+/* Secondary text */
+.ant-typography-secondary {
+  color: rgba(0, 0, 0, 0.65) !important;
+}
+
+/* Поддержка для iPhone X+ (безопасные области) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .telegram-app {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+  }
+}
