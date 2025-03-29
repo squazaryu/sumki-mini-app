@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/sumki-mini-app/static/css/main.b0913e53.css",
-    "main.js": "/sumki-mini-app/static/js/main.e4c6e730.js",
+    "main.js": "/sumki-mini-app/static/js/main.c7a86981.js",
     "static/js/453.7fb7111e.chunk.js": "/sumki-mini-app/static/js/453.7fb7111e.chunk.js",
     "index.html": "/sumki-mini-app/index.html",
     "static/media/index.cjs": "/sumki-mini-app/static/media/index.42119833dddefe38a9fa.cjs",
     "main.b0913e53.css.map": "/sumki-mini-app/static/css/main.b0913e53.css.map",
-    "main.e4c6e730.js.map": "/sumki-mini-app/static/js/main.e4c6e730.js.map",
+    "main.c7a86981.js.map": "/sumki-mini-app/static/js/main.c7a86981.js.map",
     "453.7fb7111e.chunk.js.map": "/sumki-mini-app/static/js/453.7fb7111e.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.b0913e53.css",
-    "static/js/main.e4c6e730.js"
+    "static/js/main.c7a86981.js"
   ]
 }
